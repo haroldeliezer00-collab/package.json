@@ -176,7 +176,7 @@
                 const select = document.getElementById('selectCuentaActiva');
                 select.innerHTML = '';
                 cuentasCache.forEach(c => {
-                    select.innerHTML += `<option value="${c.numeroCuenta}">${c.banco} - ${c.numeroCuenta} (PM: ${c.telefonoPagoMovil})</option>`;
+                    select.innerHTML += `<option value="${c.telefonoPagoMovil}" data-cedula="${c.cedula}">${c.banco} - ${c.numeroCuenta} (PM: ${c.telefonoPagoMovil})</option>`;
                 });
             } catch (e) { console.error(e); }
         }
@@ -255,15 +255,44 @@
             try {
                 const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', { logger: m => {} });
                 
-                // Expresión mejorada para capturar los 12 dígitos exactos de operación del BDV
+                // 1. Extraer Referencia (10 a 14 dígitos)
                 const refMatch = text.match(/operaci[oó]n[:\s#]*(\d{10,14})/i) || text.match(/ref(?:erencia)?[:\s#]*(\d{10,14})/i) || text.match(/(\d{12})/);
-                const montoMatch = text.match(/(?:bs\.?|bolivares|mt)\s*([\d\.,]+)/i) || text.match(/([\d\.]+(?:,\d{2})?)/);
-
-                document.getElementById('refInput').value = refMatch ? refMatch[1] : "";
-                document.getElementById('montoInput').value = montoMatch ? montoMatch[1] : "0.00";
                 
+                // 2. Extraer Monto con formato venezolano (ej. 18.900,00 o 300,00)
+                const montoMatch = text.match(/([\d\.]+,\d{2})\s*(?:Bs|BS|bs)?/i) || text.match(/(\d{1,3}(?:\.\d{3})*,\d{2})/);
+
+                const referenciaEncontrada = refMatch ? refMatch[1] : "";
+                const montoEncontrado = montoMatch ? montoMatch[1] : "";
+
+                document.getElementById('refInput').value = referenciaEncontrada;
+                document.getElementById('montoInput').value = montoEncontrado;
+
+                // 3. VALIDACIÓN ANTI-FRAUDE: Verificar si el comprobante tiene el teléfono o cédula de la cuenta seleccionada
+                const selectCuenta = document.getElementById('selectCuentaActiva');
+                const optionSelected = selectCuenta.options[selectCuenta.selectedIndex];
+                const telefonoEsperado = optionSelected ? optionSelected.value : ""; // Teléfono de pago móvil
+                const cedulaEsperada = optionSelected ? optionSelected.getAttribute('data-cedula') : ""; // Cédula del titular
+
+                const textoNormalizado = text.replace(/\s+/g, '');
+                const esValido = (telefonoEsperado && textoNormalizado.includes(telefonoEsperado)) || 
+                                 (cedulaEsperada && textoNormalizado.includes(cedulaEsperada));
+
+                const alerta = document.getElementById('alerta');
+
+                if (!esValido) {
+                    // BLOQUEAR SI NO CORRESPONDE A TUS DATOS
+                    alerta.className = "p-4 rounded mb-4 font-bold text-center bg-rose-600 text-white text-base";
+                    alerta.innerHTML = `⚠️ ¡ALERTA DE SEGURIDAD!<br>Este comprobante <b>NO corresponde</b> a tus datos de pago (Destino / Cédula no coinciden con tu cuenta activa).`;
+                    alerta.classList.remove('hidden');
+                    document.getElementById('formularioRegistro').classList.add('hidden');
+                    document.getElementById('estadoOcr').innerText = "❌ Comprobante rechazado por titularidad incorrecta.";
+                    return;
+                }
+
+                // Si es válido, mostrar formulario con normalidad
+                alerta.classList.add('hidden');
                 document.getElementById('formularioRegistro').classList.remove('hidden');
-                document.getElementById('estadoOcr').innerText = "✨ ¡Datos leídos! Rellena nombre y teléfono:";
+                document.getElementById('estadoOcr').innerText = "✨ ¡Comprobante verificado como tuyo! Rellena nombre y teléfono:";
                 cargarSelectClientesFrecuentes();
 
             } catch (error) {
@@ -302,7 +331,8 @@
             const monto = document.getElementById('montoInput').value;
             const nombre = document.getElementById('nombreCliente').value;
             const telefono = document.getElementById('telefonoCliente').value;
-            const cuentaSeleccionada = document.getElementById('selectCuentaActiva').value;
+            const selectCuenta = document.getElementById('selectCuentaActiva');
+            const cuentaSeleccionada = selectCuenta.value;
             const alerta = document.getElementById('alerta');
 
             if (!nombre || !telefono || !referencia) {
@@ -378,8 +408,10 @@
             let titulo = `Monto a descontar para ${tipo}:`;
             if (tipo === 'PREMIO') titulo = `Monto del Premio a sumar:`;
             
-            const montoStr = prompt(titulo);
+            let montoStr = prompt(titulo);
             if (!montoStr) return;
+            // Limpiar comas por puntos si el usuario escribe en formato decimal
+            montoStr = montoStr.replace(',', '.');
             const monto = parseFloat(montoStr);
             if (isNaN(monto) || monto <= 0) {
                 alert('Monto inválido');
