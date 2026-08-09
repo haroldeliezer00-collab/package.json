@@ -8,12 +8,14 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión a MongoDB Atlas
+// Conexión a MongoDB Atlas optimizada para evitar timeouts
 const MONGO_URI = process.env.MONGO_URI;
-mongoose.connect(MONGO_URI)
+mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 15000,
+    socketTimeoutMS: 45000,
+})
 .then(async () => {
     console.log('Conectado a MongoDB Atlas con éxito');
-    // Inicializar cuenta por defecto si no existe ninguna
     const count = await Cuenta.countDocuments();
     if (count === 0) {
         await Cuenta.create({
@@ -28,7 +30,7 @@ mongoose.connect(MONGO_URI)
 })
 .catch(err => console.error('Error conectando a MongoDB:', err));
 
-// Esquema de Cuentas Bancarias (Múltiples cuentas)
+// Esquemas de Base de Datos
 const CuentaSchema = new mongoose.Schema({
     banco: { type: String, required: true },
     tipoCuenta: { type: String, default: 'VES' },
@@ -39,7 +41,6 @@ const CuentaSchema = new mongoose.Schema({
 });
 const Cuenta = mongoose.model('Cuenta', CuentaSchema);
 
-// Esquema de Comprobantes (Anti-Duplicados)
 const ComprobanteSchema = new mongoose.Schema({
     referencia: { type: String, required: true, unique: true },
     monto: { type: Number, required: true },
@@ -50,7 +51,6 @@ const ComprobanteSchema = new mongoose.Schema({
 });
 const Comprobante = mongoose.model('Comprobante', ComprobanteSchema);
 
-// Esquema de Clientes (Control de Saldo)
 const ClienteSchema = new mongoose.Schema({
     nombre: { type: String, required: true },
     telefono: { type: String, required: true, unique: true },
@@ -64,7 +64,7 @@ const ClienteSchema = new mongoose.Schema({
 });
 const Cliente = mongoose.model('Cliente', ClienteSchema);
 
-// Rutas de Cuentas Bancarias
+// Rutas de Cuentas
 app.get('/api/cuentas', async (req, res) => {
     try {
         const cuentas = await Cuenta.find();
