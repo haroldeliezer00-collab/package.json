@@ -19,7 +19,6 @@
         <div id="seccion-verificador" class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
             <h2 class="text-2xl font-bold mb-4 text-emerald-400">Validador de Comprobantes</h2>
             
-            <!-- Datos de la Agencia -->
             <div class="bg-sky-950 p-4 rounded-lg border border-sky-800 mb-4 text-sm text-sky-200">
                 <div class="flex justify-between items-center mb-2">
                     <span class="font-bold text-base text-amber-300">💳 Datos Agencia Harold Jose</span>
@@ -37,7 +36,6 @@
                 </select>
             </div>
 
-            <!-- Zona de Pegado -->
             <div class="mb-4">
                 <label class="block mb-2 text-sm font-semibold">Haz clic en el recuadro y presiona <span class="text-emerald-400">Ctrl + V</span> para pegar la imagen:</label>
                 <div id="zonaPegado" contenteditable="true" class="w-full h-32 p-3 rounded bg-slate-900 border-2 border-dashed border-slate-600 focus:outline-none focus:border-emerald-500 flex flex-col items-center justify-center text-center text-slate-400 cursor-pointer overflow-hidden">
@@ -49,7 +47,7 @@
 
             <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
 
-            <!-- Formulario Ordenado Exacto a tu Maqueta -->
+            <!-- Formulario Ordenado -->
             <div id="formularioRegistro" class="hidden space-y-4 border-t border-slate-700 pt-4">
                 <div>
                     <label class="block text-sm font-semibold text-slate-300 mb-1">¿CLIENTE FRECUENTE?:</label>
@@ -60,12 +58,12 @@
 
                 <div>
                     <label class="block text-xs font-bold text-amber-400 uppercase mb-1">Referencia leída aquí</label>
-                    <input type="text" id="refInput" readonly class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
+                    <input type="text" id="refInput" class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-amber-400 uppercase mb-1">Monto del comprobante leído aquí</label>
-                    <input type="text" id="montoInput" readonly class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
+                    <input type="text" id="montoInput" class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
                 </div>
 
                 <div>
@@ -225,7 +223,6 @@
             alert('¡Datos de la agencia copiados al portapapeles!');
         }
 
-        // ZONA DE PEGADO E INTERPRETACIÓN LOCAL INMEDIATA
         const zonaPegado = document.getElementById('zonaPegado');
         zonaPegado.addEventListener('paste', async (e) => {
             e.preventDefault();
@@ -258,49 +255,20 @@
             try {
                 const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', { logger: m => {} });
                 
-                // Extracción local automática e instantánea de referencia y monto
                 const refMatch = text.match(/ref(?:erencia)?[:\s#]*(\d{4,10})/i) || text.match(/(\d{6,10})/);
                 const montoMatch = text.match(/(?:bs\.?|bolivares|mt)\s*([\d\.,]+)/i) || text.match(/([\d\.]+(?:,\d{2})?)/);
 
-                const referenciaEncontrada = refMatch ? refMatch[1] : "No detectada";
-                const montoEncontrado = montoMatch ? montoMatch[1] : "0.00";
-
-                document.getElementById('refInput').value = referenciaEncontrada;
-                document.getElementById('montoInput').value = montoEncontrado;
+                document.getElementById('refInput').value = refMatch ? refMatch[1] : "";
+                document.getElementById('montoInput').value = montoMatch ? montoMatch[1] : "0.00";
                 
-                // MOSTRAR EL FORMULARIO INMEDIATAMENTE
                 document.getElementById('formularioRegistro').classList.remove('hidden');
                 document.getElementById('estadoOcr').innerText = "✨ ¡Datos leídos! Rellena nombre y teléfono:";
-                
                 cargarSelectClientesFrecuentes();
-                verificarDuplicadoRemoto(referenciaEncontrada);
 
             } catch (error) {
                 document.getElementById('estadoOcr').innerText = "❌ Error al leer la imagen. Intenta de nuevo.";
             }
         });
-
-        async function verificarDuplicadoRemoto(referencia) {
-            try {
-                const response = await fetch('/api/verificar-comprobante', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ referencia })
-                });
-                const data = await response.json();
-                const alerta = document.getElementById('alerta');
-                
-                if (data.status === 'duplicado') {
-                    alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
-                    alerta.innerText = data.message;
-                    alerta.classList.remove('hidden');
-                } else {
-                    alerta.classList.add('hidden');
-                }
-            } catch (e) {
-                console.error("Verificación en segundo plano omitida temporalmente");
-            }
-        }
 
         async function cargarSelectClientesFrecuentes() {
             try {
@@ -342,7 +310,7 @@
             }
 
             try {
-                const response = await fetch('/api/verificar-comprobante', {
+                const response = await fetch('/api/guardar-pago', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ referencia, monto, nombreCliente: nombre, telefono, cuentaDestino: cuentaSeleccionada })
