@@ -92,6 +92,25 @@ app.delete('/api/cuentas/:id', async (req, res) => {
     }
 });
 
+// Ruta para verificar si la referencia ya existe ANTES de guardar
+app.post('/api/verificar-referencia', async (req, res) => {
+    try {
+        const { referencia } = req.body;
+        if (!referencia) return res.status(400).json({ status: 'error' });
+
+        const existe = await Comprobante.findOne({ referencia: referencia.trim() });
+        if (existe) {
+            return res.json({
+                status: 'duplicado',
+                message: `⚠️ ¡PAGO REPETIDO! Esta referencia ya fue registrada por ${existe.nombreCliente} (Tel: ${existe.telefono}) el día ${new Date(existe.fecha).toLocaleDateString()}.`
+            });
+        }
+        res.json({ status: 'libre' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/guardar-pago', async (req, res) => {
     try {
         const { referencia, monto, nombreCliente, telefono, cuentaDestino } = req.body;
@@ -104,7 +123,7 @@ app.post('/api/guardar-pago', async (req, res) => {
         if (existe) {
             return res.status(400).json({
                 status: 'duplicado',
-                message: `¡ALERTA! Referencia ya usada por ${existe.nombreCliente} (Tel: ${existe.telefono}).`
+                message: `⚠️ ¡PAGO REPETIDO! Esta referencia ya fue registrada por ${existe.nombreCliente} (Tel: ${existe.telefono}).`
             });
         }
 
@@ -139,7 +158,7 @@ app.post('/api/guardar-pago', async (req, res) => {
         res.json({ status: 'exito', message: '¡Guardado y saldo acreditado con éxito!' });
     } catch (error) {
         if (error.code === 11000) {
-            return res.status(400).json({ status: 'duplicado', message: '¡Esta referencia ya se encuentra registrada!' });
+            return res.status(400).json({ status: 'duplicado', message: '⚠️ ¡Esta referencia ya se encuentra registrada!' });
         }
         res.status(500).json({ status: 'error', message: error.message });
     }
