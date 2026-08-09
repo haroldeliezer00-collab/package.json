@@ -15,11 +15,11 @@
             <button onclick="cambiarTab('clientes')" id="btn-clientes" class="py-2 px-4 font-bold text-slate-400 hover:text-white">Control de Clientes & Saldo</button>
         </div>
 
-        <!-- SECCIÓN 1: VERIFICADOR DE PAGOS (Maqueta Exacta) -->
+        <!-- SECCIÓN 1: VERIFICADOR DE PAGOS -->
         <div id="seccion-verificador" class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
             <h2 class="text-2xl font-bold mb-4 text-emerald-400">Validador de Comprobantes</h2>
             
-            <!-- Tarjeta de Datos de la Agencia -->
+            <!-- Datos de la Agencia -->
             <div class="bg-sky-950 p-4 rounded-lg border border-sky-800 mb-4 text-sm text-sky-200">
                 <div class="flex justify-between items-center mb-2">
                     <span class="font-bold text-base text-amber-300">💳 Datos Agencia Harold Jose</span>
@@ -30,7 +30,6 @@
                 <p><strong>🏦 TRANSFERENCIA:</strong> VES | Cuenta: 01020613810000317201 | Titular: Harold Eliezer Galea Sanchez</p>
             </div>
 
-            <!-- Selector de Cuenta Activa -->
             <div class="mb-4">
                 <label class="block text-sm mb-1 font-semibold text-emerald-300">Seleccionar cuenta receptora:</label>
                 <select id="selectCuentaActiva" class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-slate-200">
@@ -38,7 +37,7 @@
                 </select>
             </div>
 
-            <!-- Zona de Pegado de Imagen (Ctrl+V) -->
+            <!-- Zona de Pegado -->
             <div class="mb-4">
                 <label class="block mb-2 text-sm font-semibold">Haz clic en el recuadro y presiona <span class="text-emerald-400">Ctrl + V</span> para pegar la imagen:</label>
                 <div id="zonaPegado" contenteditable="true" class="w-full h-32 p-3 rounded bg-slate-900 border-2 border-dashed border-slate-600 focus:outline-none focus:border-emerald-500 flex flex-col items-center justify-center text-center text-slate-400 cursor-pointer overflow-hidden">
@@ -50,7 +49,7 @@
 
             <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
 
-            <!-- Formulario Ordenado según Maqueta -->
+            <!-- Formulario Ordenado Exacto a tu Maqueta -->
             <div id="formularioRegistro" class="hidden space-y-4 border-t border-slate-700 pt-4">
                 <div>
                     <label class="block text-sm font-semibold text-slate-300 mb-1">¿CLIENTE FRECUENTE?:</label>
@@ -60,22 +59,22 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Referencia leída aquí</label>
+                    <label class="block text-xs font-bold text-amber-400 uppercase mb-1">Referencia leída aquí</label>
                     <input type="text" id="refInput" readonly class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Monto del comprobante leído aquí</label>
+                    <label class="block text-xs font-bold text-amber-400 uppercase mb-1">Monto del comprobante leído aquí</label>
                     <input type="text" id="montoInput" readonly class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Yo coloco el nombre aquí</label>
+                    <label class="block text-xs font-bold text-amber-400 uppercase mb-1">Yo coloco el nombre aquí</label>
                     <input type="text" id="nombreCliente" class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-white font-semibold" placeholder="Nombre completo del cliente">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Yo coloco el número tlf aquí</label>
+                    <label class="block text-xs font-bold text-amber-400 uppercase mb-1">Yo coloco el número tlf aquí</label>
                     <input type="text" id="telefonoCliente" class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-white font-semibold" placeholder="04124489363">
                 </div>
                 
@@ -86,10 +85,9 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 2: GESTIÓN DE CUENTAS BANCARIAS -->
+        <!-- SECCIÓN 2: CUENTAS -->
         <div id="seccion-cuentas" class="hidden bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-            <h2 class="text-2xl font-bold mb-4 text-emerald-400">Gestión de Cuentas Bancarias y Pago Móvil</h2>
-            
+            <h2 class="text-2xl font-bold mb-4 text-emerald-400">Gestión de Cuentas Bancarias</h2>
             <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 mb-6 space-y-3">
                 <h3 class="font-bold text-lg text-amber-400">Agregar Nueva Cuenta</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -102,12 +100,11 @@
                 </div>
                 <button onclick="agregarCuenta()" class="bg-emerald-600 hover:bg-emerald-500 w-full py-2.5 rounded font-bold">Guardar Cuenta</button>
             </div>
-
             <h3 class="font-bold text-lg mb-3">Cuentas Registradas</h3>
             <div id="listaCuentas" class="space-y-3"></div>
         </div>
 
-        <!-- SECCIÓN 3: CONTROL DE CLIENTES Y SALDOS -->
+        <!-- SECCIÓN 3: CLIENTES -->
         <div id="seccion-clientes" class="hidden bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
             <h2 class="text-2xl font-bold mb-4 text-emerald-400">Control de Saldo de Clientes</h2>
             <div class="mb-4">
@@ -120,7 +117,6 @@
     <script>
         let clientesCache = [];
         let cuentasCache = [];
-        let textoExtraidoGlobal = "";
 
         window.onload = function() {
             cargarCuentas();
@@ -151,36 +147,40 @@
         }
 
         async function cargarCuentas() {
-            const res = await fetch('/api/cuentas');
-            cuentasCache = await res.json();
-            const contenedor = document.getElementById('listaCuentas');
-            contenedor.innerHTML = '';
-            if (cuentasCache.length === 0) {
-                contenedor.innerHTML = '<p class="text-slate-400 text-center">No hay cuentas registradas.</p>';
-                return;
-            }
-            cuentasCache.forEach(c => {
-                contenedor.innerHTML += `
-                    <div class="bg-slate-900 p-4 rounded border border-slate-700 flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-emerald-400">${c.banco}</p>
-                            <p class="text-sm text-slate-300">Cuenta: ${c.numeroCuenta}</p>
-                            <p class="text-xs text-slate-400">Pago Móvil: ${c.telefonoPagoMovil} | Cédula: ${c.cedula} | Titular: ${c.titular}</p>
+            try {
+                const res = await fetch('/api/cuentas');
+                cuentasCache = await res.json();
+                const contenedor = document.getElementById('listaCuentas');
+                contenedor.innerHTML = '';
+                if (cuentasCache.length === 0) {
+                    contenedor.innerHTML = '<p class="text-slate-400 text-center">No hay cuentas registradas.</p>';
+                    return;
+                }
+                cuentasCache.forEach(c => {
+                    contenedor.innerHTML += `
+                        <div class="bg-slate-900 p-4 rounded border border-slate-700 flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-emerald-400">${c.banco}</p>
+                                <p class="text-sm text-slate-300">Cuenta: ${c.numeroCuenta}</p>
+                                <p class="text-xs text-slate-400">Pago Móvil: ${c.telefonoPagoMovil} | Cédula: ${c.cedula} | Titular: ${c.titular}</p>
+                            </div>
+                            <button onclick="eliminarCuenta('${c._id}')" class="bg-rose-600 hover:bg-rose-500 px-3 py-1 rounded text-xs font-bold">Eliminar</button>
                         </div>
-                        <button onclick="eliminarCuenta('${c._id}')" class="bg-rose-600 hover:bg-rose-500 px-3 py-1 rounded text-xs font-bold">Eliminar</button>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            } catch (e) { console.error(e); }
         }
 
         async function cargarCuentasSelector() {
-            const res = await fetch('/api/cuentas');
-            cuentasCache = await res.json();
-            const select = document.getElementById('selectCuentaActiva');
-            select.innerHTML = '';
-            cuentasCache.forEach(c => {
-                select.innerHTML += `<option value="${c.numeroCuenta}">${c.banco} - ${c.numeroCuenta} (PM: ${c.telefonoPagoMovil})</option>`;
-            });
+            try {
+                const res = await fetch('/api/cuentas');
+                cuentasCache = await res.json();
+                const select = document.getElementById('selectCuentaActiva');
+                select.innerHTML = '';
+                cuentasCache.forEach(c => {
+                    select.innerHTML += `<option value="${c.numeroCuenta}">${c.banco} - ${c.numeroCuenta} (PM: ${c.telefonoPagoMovil})</option>`;
+                });
+            } catch (e) { console.error(e); }
         }
 
         async function agregarCuenta() {
@@ -225,6 +225,7 @@
             alert('¡Datos de la agencia copiados al portapapeles!');
         }
 
+        // ZONA DE PEGADO E INTERPRETACIÓN LOCAL INMEDIATA
         const zonaPegado = document.getElementById('zonaPegado');
         zonaPegado.addEventListener('paste', async (e) => {
             e.preventDefault();
@@ -239,7 +240,7 @@
             }
 
             if (!imagenFile) {
-                alert('Por favor pega una imagen válida de WhatsApp.');
+                alert('Por favor pega una imagen válida.');
                 return;
             }
 
@@ -252,57 +253,65 @@
             }
             reader.readAsDataURL(imagenFile);
 
-            document.getElementById('estadoOcr').innerText = "🔍 Leyendo comprobante y extrayendo datos...";
+            document.getElementById('estadoOcr').innerText = "🔍 Leyendo imagen del comprobante...";
             
             try {
                 const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', { logger: m => {} });
-                textoExtraidoGlobal = text;
-                document.getElementById('estadoOcr').innerText = "✅ ¡Lectura completada! Analizando referencia...";
-                analizarTextoComprobante(text);
+                
+                // Extracción local automática e instantánea de referencia y monto
+                const refMatch = text.match(/ref(?:erencia)?[:\s#]*(\d{4,10})/i) || text.match(/(\d{6,10})/);
+                const montoMatch = text.match(/(?:bs\.?|bolivares|mt)\s*([\d\.,]+)/i) || text.match(/([\d\.]+(?:,\d{2})?)/);
+
+                const referenciaEncontrada = refMatch ? refMatch[1] : "No detectada";
+                const montoEncontrado = montoMatch ? montoMatch[1] : "0.00";
+
+                document.getElementById('refInput').value = referenciaEncontrada;
+                document.getElementById('montoInput').value = montoEncontrado;
+                
+                // MOSTRAR EL FORMULARIO INMEDIATAMENTE
+                document.getElementById('formularioRegistro').classList.remove('hidden');
+                document.getElementById('estadoOcr').innerText = "✨ ¡Datos leídos! Rellena nombre y teléfono:";
+                
+                cargarSelectClientesFrecuentes();
+                verificarDuplicadoRemoto(referenciaEncontrada);
+
             } catch (error) {
-                document.getElementById('estadoOcr').innerText = "❌ Error al leer la imagen. Intenta con otra más clara.";
+                document.getElementById('estadoOcr').innerText = "❌ Error al leer la imagen. Intenta de nuevo.";
             }
         });
 
-        async function analizarTextoComprobante(texto) {
-            const alerta = document.getElementById('alerta');
-            const cuentaSeleccionada = document.getElementById('selectCuentaActiva').value;
-            
-            const response = await fetch('/api/verificar-comprobante', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ textoComprobante: texto, cuentaDestino: cuentaSeleccionada })
-            });
-            const data = await response.json();
-            
-            if (data.status === 'duplicado') {
-                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
-                alerta.innerText = data.message;
-                alerta.classList.remove('hidden');
-                document.getElementById('formularioRegistro').classList.add('hidden');
-                document.getElementById('estadoOcr').innerText = "❌ Comprobante duplicado detectado.";
-            } else if (data.status === 'analizado') {
-                alerta.className = "hidden";
-                document.getElementById('refInput').value = data.referencia;
-                document.getElementById('montoInput').value = data.monto;
-                document.getElementById('formularioRegistro').classList.remove('hidden');
-                document.getElementById('estadoOcr').innerText = "✨ ¡Datos listos para registrar!";
-                cargarSelectClientesFrecuentes();
-            } else {
-                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-amber-600 text-white";
-                alerta.innerText = data.message;
-                alerta.classList.remove('hidden');
+        async function verificarDuplicadoRemoto(referencia) {
+            try {
+                const response = await fetch('/api/verificar-comprobante', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ referencia })
+                });
+                const data = await response.json();
+                const alerta = document.getElementById('alerta');
+                
+                if (data.status === 'duplicado') {
+                    alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
+                    alerta.innerText = data.message;
+                    alerta.classList.remove('hidden');
+                } else {
+                    alerta.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error("Verificación en segundo plano omitida temporalmente");
             }
         }
 
         async function cargarSelectClientesFrecuentes() {
-            const res = await fetch('/api/clientes');
-            clientesCache = await res.json();
-            const select = document.getElementById('selectClienteFrecuente');
-            select.innerHTML = '<option value="">-- Nuevo cliente o escribir manual --</option>';
-            clientesCache.forEach(c => {
-                select.innerHTML += `<option value="${c._id}">${c.nombre} (${c.telefono}) - Saldo: Bs. ${c.saldo.toFixed(2)}</option>`;
-            });
+            try {
+                const res = await fetch('/api/clientes');
+                clientesCache = await res.json();
+                const select = document.getElementById('selectClienteFrecuente');
+                select.innerHTML = '<option value="">-- Nuevo cliente o escribir manual --</option>';
+                clientesCache.forEach(c => {
+                    select.innerHTML += `<option value="${c._id}">${c.nombre} (${c.telefono}) - Saldo: Bs. ${c.saldo.toFixed(2)}</option>`;
+                });
+            } catch (e) { console.error(e); }
         }
 
         function cargarClienteFrecuente() {
@@ -320,39 +329,46 @@
         }
 
         async function guardarComprobante() {
+            const referencia = document.getElementById('refInput').value;
+            const monto = document.getElementById('montoInput').value;
             const nombre = document.getElementById('nombreCliente').value;
             const telefono = document.getElementById('telefonoCliente').value;
             const cuentaSeleccionada = document.getElementById('selectCuentaActiva').value;
             const alerta = document.getElementById('alerta');
 
-            if (!nombre || !telefono) {
-                alert('Por favor ingresa el nombre y número de teléfono del cliente.');
+            if (!nombre || !telefono || !referencia) {
+                alert('Por favor asegúrate de que la referencia, el nombre y el teléfono estén completos.');
                 return;
             }
 
-            const response = await fetch('/api/verificar-comprobante', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ textoComprobante: textoExtraidoGlobal, nombreCliente: nombre, telefono: telefono, cuentaDestino: cuentaSeleccionada })
-            });
+            try {
+                const response = await fetch('/api/verificar-comprobante', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ referencia, monto, nombreCliente: nombre, telefono, cuentaDestino: cuentaSeleccionada })
+                });
 
-            const data = await response.json();
-            if (data.status === 'exito') {
-                alert('¡Pago guardado y saldo acreditado con éxito!');
-                limpiarFormulario();
-                // Salto automático a la pestaña de Control de Clientes & Saldo
-                cambiarTab('clientes');
-            } else {
-                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
-                alerta.innerText = data.message;
-                alerta.classList.remove('hidden');
+                const data = await response.json();
+                if (data.status === 'exito') {
+                    alert('¡Pago guardado y saldo acreditado con éxito!');
+                    limpiarFormulario();
+                    cambiarTab('clientes');
+                } else {
+                    alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
+                    alerta.innerText = data.message;
+                    alerta.classList.remove('hidden');
+                }
+            } catch (err) {
+                alert('Error de conexión al guardar.');
             }
         }
 
         async function cargarClientes() {
-            const res = await fetch('/api/clientes');
-            clientesCache = await res.json();
-            mostrarClientes(clientesCache);
+            try {
+                const res = await fetch('/api/clientes');
+                clientesCache = await res.json();
+                mostrarClientes(clientesCache);
+            } catch (e) { console.error(e); }
         }
 
         function mostrarClientes(clientes) {
