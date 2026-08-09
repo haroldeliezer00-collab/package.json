@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Validador de Pagos - Centro de Apuestas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white p-6">
+    <div class="max-w-xl mx-auto bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+        <h2 class="text-2xl font-bold mb-4 text-emerald-400">Verificador de Pagos</h2>
+        
+        <!-- Datos Bancarios de Referencia -->
+        <div class="bg-slate-700 p-3 rounded mb-4 text-sm text-slate-300">
+            <p><strong>Datos Bancarios / Pago Móvil:</strong></p>
+            <p>Banco: Banesco / Banco de Venezuela | Teléfono: 0414-XXXXXXX</p>
+            <p>Cédula: V-XXXXXXXX</p>
+        </div>
+
+        <!-- Pegar Comprobante -->
+        <div class="mb-4">
+            <label class="block mb-2 text-sm">Pega el texto del comprobante aquí:</label>
+            <textarea id="textoComprobante" rows="4" class="w-full p-3 rounded bg-slate-900 border border-slate-600 focus:outline-none focus:border-emerald-500" placeholder="Pega el mensaje del banco..."></textarea>
+            <button onclick="analizarComprobante()" class="mt-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold w-full">Analizar Comprobante</button>
+        </div>
+
+        <!-- Alertas Dinámicas -->
+        <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
+
+        <!-- Formulario de Registro -->
+        <div id="formularioRegistro" class="hidden space-y-3 border-t border-slate-700 pt-4">
+            <div>
+                <label class="block text-sm">Referencia Detectada:</label>
+                <input type="text" id="refInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
+            </div>
+            <div>
+                <label class="block text-sm">Monto Detectado (Bs):</label>
+                <input type="text" id="montoInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
+            </div>
+            <div>
+                <label class="block text-sm">Nombre del Cliente:</label>
+                <input type="text" id="nombreCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="Nombre completo">
+            </div>
+            <div>
+                <label class="block text-sm">Número de Teléfono:</label>
+                <input type="text" id="telefonoCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="04141234567">
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="guardarComprobante()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-semibold flex-1">Guardar Pago</button>
+                <button onclick="limpiarFormulario()" class="bg-rose-600 hover:bg-rose-500 px-4 py-2 rounded font-semibold">Limpiar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analizarComprobante() {
+            const texto = document.getElementById('textoComprobante').value;
+            const alerta = document.getElementById('alerta');
+            
+            const response = await fetch('/api/verificar-comprobante', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ textoComprobante: texto })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'duplicado') {
+                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
+                alerta.innerText = data.message;
+                alerta.classList.remove('hidden');
+                document.getElementById('formularioRegistro').classList.add('hidden');
+            } else if (data.status === 'analizado') {
+                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-emerald-600 text-white";
+                alerta.innerText = "¡Comprobante verificado con éxito!";
+                alerta.classList.remove('hidden');
+                
+                document.getElementById('refInput').value = data.referencia;
+                document.getElementById('montoInput').value = data.monto;
+            } else {
+                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-amber-600 text-white";
+                alerta.innerText = data.message;
+                alerta.classList.remove('hidden');
+            }
+        }
+
+        async function guardarComprobante() {
+            const texto = document.getElementById('textoComprobante').value;
+            const nombre = document.getElementById('nombreCliente').value;
+            const telefono = document.getElementById('telefonoCliente').value;
+            const alerta = document.getElementById('alerta');
+
+            const response = await fetch('/api/verificar-comprobante', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ textoComprobante: texto, nombreCliente: nombre, telefono: telefono })
+            });
+
+            const data = await response.json();
+            if (data.status === 'exito') {
+                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-emerald-600 text-white";
+                alerta.innerText = "¡Guardado exitosamente en la nube!";
+                document.getElementById('formularioRegistro').classList.add('hidden');
+            } else {
+                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
+                alerta.innerText = data.message;
+            }
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('textoComprobante').value = '';
+            document.getElementById('nombreCliente').value = '';
+            document.getElementById('telefonoCliente').value = '';
+            document.getElementById('refInput').value = '';
+            document.getElementById('montoInput').value = '';
+            document.getElementById('formularioRegistro').classList.add('hidden');
+            document.getElementById('alerta').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
