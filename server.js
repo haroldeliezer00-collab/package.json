@@ -8,9 +8,13 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión directa a MongoDB Atlas
+// Conexión a MongoDB Atlas optimizada
 const MONGO_URI = process.env.MONGO_URI;
-mongoose.connect(MONGO_URI, { family: 4 })
+mongoose.connect(MONGO_URI, {
+    family: 4,
+    serverSelectionTimeoutMS: 15000,
+    socketTimeoutMS: 45000,
+})
 .then(async () => {
     console.log('Conectado a MongoDB Atlas con éxito');
     const count = await Cuenta.countDocuments();
@@ -88,7 +92,6 @@ app.delete('/api/cuentas/:id', async (req, res) => {
     }
 });
 
-// Ruta única para guardar el pago y actualizar saldo del cliente
 app.post('/api/guardar-pago', async (req, res) => {
     try {
         const { referencia, monto, nombreCliente, telefono, cuentaDestino } = req.body;
@@ -97,7 +100,6 @@ app.post('/api/guardar-pago', async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'Faltan datos obligatorios.' });
         }
 
-        // Verificar si la referencia ya fue usada
         const existe = await Comprobante.findOne({ referencia: referencia.trim() });
         if (existe) {
             return res.status(400).json({
@@ -109,7 +111,6 @@ app.post('/api/guardar-pago', async (req, res) => {
         const montoNum = parseFloat(String(monto).replace(/\./g, '').replace(',', '.'));
         const montoFinal = isNaN(montoNum) ? 0 : montoNum;
 
-        // Guardar comprobante
         const nuevoComprobante = new Comprobante({ 
             referencia: referencia.trim(), 
             monto: montoFinal, 
@@ -119,7 +120,6 @@ app.post('/api/guardar-pago', async (req, res) => {
         });
         await nuevoComprobante.save();
 
-        // Actualizar o crear cliente y sumar saldo
         let cliente = await Cliente.findOne({ telefono: telefono.trim() });
         if (!cliente) {
             cliente = new Cliente({ 
