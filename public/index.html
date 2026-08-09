@@ -45,7 +45,7 @@
                 <div id="estadoOcr" class="text-xs text-amber-400 mt-1 font-semibold text-center"></div>
             </div>
 
-            <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
+            <div id="alerta" class="hidden p-4 rounded mb-4 font-bold text-center"></div>
 
             <!-- Formulario Ordenado -->
             <div id="formularioRegistro" class="hidden space-y-4 border-t border-slate-700 pt-4">
@@ -255,10 +255,8 @@
             try {
                 const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', { logger: m => {} });
                 
-                // 1. Extraer Referencia (10 a 14 dígitos)
+                // 1. Extraer Referencia y Monto
                 const refMatch = text.match(/operaci[oó]n[:\s#]*(\d{10,14})/i) || text.match(/ref(?:erencia)?[:\s#]*(\d{10,14})/i) || text.match(/(\d{12})/);
-                
-                // 2. Extraer Monto con formato venezolano (ej. 18.900,00 o 300,00)
                 const montoMatch = text.match(/([\d\.]+,\d{2})\s*(?:Bs|BS|bs)?/i) || text.match(/(\d{1,3}(?:\.\d{3})*,\d{2})/);
 
                 const referenciaEncontrada = refMatch ? refMatch[1] : "";
@@ -267,32 +265,50 @@
                 document.getElementById('refInput').value = referenciaEncontrada;
                 document.getElementById('montoInput').value = montoEncontrado;
 
-                // 3. VALIDACIÓN ANTI-FRAUDE: Verificar si el comprobante tiene el teléfono o cédula de la cuenta seleccionada
+                const alerta = document.getElementById('alerta');
+
+                // 2. VALIDACIÓN 1: Titularidad / Datos Correctos
                 const selectCuenta = document.getElementById('selectCuentaActiva');
                 const optionSelected = selectCuenta.options[selectCuenta.selectedIndex];
-                const telefonoEsperado = optionSelected ? optionSelected.value : ""; // Teléfono de pago móvil
-                const cedulaEsperada = optionSelected ? optionSelected.getAttribute('data-cedula') : ""; // Cédula del titular
+                const telefonoEsperado = optionSelected ? optionSelected.value : "";
+                const cedulaEsperada = optionSelected ? optionSelected.getAttribute('data-cedula') : "";
 
                 const textoNormalizado = text.replace(/\s+/g, '');
                 const esValido = (telefonoEsperado && textoNormalizado.includes(telefonoEsperado)) || 
                                  (cedulaEsperada && textoNormalizado.includes(cedulaEsperada));
 
-                const alerta = document.getElementById('alerta');
-
                 if (!esValido) {
-                    // BLOQUEAR SI NO CORRESPONDE A TUS DATOS
                     alerta.className = "p-4 rounded mb-4 font-bold text-center bg-rose-600 text-white text-base";
-                    alerta.innerHTML = `⚠️ ¡ALERTA DE SEGURIDAD!<br>Este comprobante <b>NO corresponde</b> a tus datos de pago (Destino / Cédula no coinciden con tu cuenta activa).`;
+                    alerta.innerHTML = `⚠️ ¡ALERTA DE SEGURIDAD!<br>Este comprobante <b>NO corresponde</b> a tus datos de pago.`;
                     alerta.classList.remove('hidden');
                     document.getElementById('formularioRegistro').classList.add('hidden');
-                    document.getElementById('estadoOcr').innerText = "❌ Comprobante rechazado por titularidad incorrecta.";
+                    document.getElementById('estadoOcr').innerText = "❌ Comprobante rechazado por titularidad.";
                     return;
                 }
 
-                // Si es válido, mostrar formulario con normalidad
+                // 3. VALIDACIÓN 2: Comprobante Duplicado en la Base de Datos
+                if (referenciaEncontrada) {
+                    const resDup = await fetch('/api/verificar-referencia', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ referencia: referenciaEncontrada })
+                    });
+                    const dataDup = await resDup.json();
+
+                    if (dataDup.status === 'duplicado') {
+                        alerta.className = "p-4 rounded mb-4 font-bold text-center bg-rose-600 text-white text-base";
+                        alerta.innerHTML = dataDup.message;
+                        alerta.classList.remove('hidden');
+                        document.getElementById('formularioRegistro').classList.add('hidden');
+                        document.getElementById('estadoOcr').innerText = "❌ Comprobante duplicado detectado.";
+                        return;
+                    }
+                }
+
+                // Si pasa ambas validaciones, mostrar el formulario con normalidad
                 alerta.classList.add('hidden');
                 document.getElementById('formularioRegistro').classList.remove('hidden');
-                document.getElementById('estadoOcr').innerText = "✨ ¡Comprobante verificado como tuyo! Rellena nombre y teléfono:";
+                document.getElementById('estadoOcr').innerText = "✨ ¡Comprobante verificado con éxito! Rellena nombre y teléfono:";
                 cargarSelectClientesFrecuentes();
 
             } catch (error) {
@@ -353,7 +369,7 @@
                     limpiarFormulario();
                     cambiarTab('clientes');
                 } else {
-                    alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
+                    alerta.className = "p-4 rounded mb-4 font-bold text-center bg-rose-600 text-white";
                     alerta.innerText = data.message;
                     alerta.classList.remove('hidden');
                 }
@@ -410,7 +426,6 @@
             
             let montoStr = prompt(titulo);
             if (!montoStr) return;
-            // Limpiar comas por puntos si el usuario escribe en formato decimal
             montoStr = montoStr.replace(',', '.');
             const monto = parseFloat(montoStr);
             if (isNaN(monto) || monto <= 0) {
