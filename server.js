@@ -25,7 +25,8 @@ mongoose.connect(MONGO_URI, {
             numeroCuenta: '01020613810000317201',
             telefonoPagoMovil: '04124489363',
             cedula: '18274410',
-            titular: 'Harold Eliezer Galea Sanchez'
+            titular: 'Harold Eliezer Galea Sanchez',
+            saldo: 0
         });
     }
 })
@@ -37,7 +38,8 @@ const CuentaSchema = new mongoose.Schema({
     numeroCuenta: { type: String, required: true },
     telefonoPagoMovil: { type: String, required: true },
     cedula: { type: String, required: true },
-    titular: { type: String, required: true }
+    titular: { type: String, required: true },
+    saldo: { type: Number, default: 0 }
 });
 const Cuenta = mongoose.model('Cuenta', CuentaSchema);
 
@@ -83,6 +85,17 @@ app.post('/api/cuentas', async (req, res) => {
     }
 });
 
+app.put('/api/cuentas/:id/saldo', async (req, res) => {
+    try {
+        const { saldo } = req.body;
+        const saldoNum = parseFloat(String(saldo).replace(/\./g, '').replace(',', '.')) || 0;
+        const cuenta = await Cuenta.findByIdAndUpdate(req.params.id, { saldo: saldoNum }, { new: true });
+        res.json({ status: 'exito', cuenta });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.delete('/api/cuentas/:id', async (req, res) => {
     try {
         await Cuenta.findByIdAndDelete(req.params.id);
@@ -92,7 +105,7 @@ app.delete('/api/cuentas/:id', async (req, res) => {
     }
 });
 
-// Ruta para verificar si la referencia ya existe ANTES de guardar
+// Verificar referencia (Duplicados)
 app.post('/api/verificar-referencia', async (req, res) => {
     try {
         const { referencia } = req.body;
@@ -102,7 +115,7 @@ app.post('/api/verificar-referencia', async (req, res) => {
         if (existe) {
             return res.json({
                 status: 'duplicado',
-                message: `⚠️ ¡PAGO REPETIDO! Esta referencia ya fue registrada por ${existe.nombreCliente} (Tel: ${existe.telefono}) el día ${new Date(existe.fecha).toLocaleDateString()}.`
+                message: `⚠️ ¡ALERTA DE SEGURIDAD!<br>Este comprobante ya fue registrado por <b>${existe.nombreCliente}</b> (Tel: <b>${existe.telefono}</b>) el día ${new Date(existe.fecha).toLocaleDateString()}.`
             });
         }
         res.json({ status: 'libre' });
