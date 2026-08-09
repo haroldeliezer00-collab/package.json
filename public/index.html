@@ -2,75 +2,97 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Centro de Apuestas - Validador con Imagen</title>
+    <title>Centro de Apuestas - Validador Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Librería gratuita de OCR para leer imágenes en el navegador -->
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js'></script>
 </head>
 <body class="bg-slate-900 text-white p-4 md:p-6">
     <div class="max-w-3xl mx-auto">
         <!-- Navegación por pestañas -->
-        <div class="flex border-b border-slate-700 mb-6">
+        <div class="flex border-b border-slate-700 mb-6 flex-wrap gap-2">
             <button onclick="cambiarTab('verificador')" id="btn-verificador" class="py-2 px-4 font-bold border-b-2 border-emerald-500 text-emerald-400">Verificador de Pagos</button>
+            <button onclick="cambiarTab('cuentas')" id="btn-cuentas" class="py-2 px-4 font-bold text-slate-400 hover:text-white">Mis Cuentas Bancarias</button>
             <button onclick="cambiarTab('clientes')" id="btn-clientes" class="py-2 px-4 font-bold text-slate-400 hover:text-white">Control de Clientes & Saldo</button>
         </div>
 
         <!-- SECCIÓN 1: VERIFICADOR DE PAGOS -->
         <div id="seccion-verificador" class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-            <h2 class="text-2xl font-bold mb-4 text-emerald-400">Validador de Comprobantes por Imagen</h2>
+            <h2 class="text-2xl font-bold mb-4 text-emerald-400">Validador de Comprobantes</h2>
             
-            <div class="bg-slate-700 p-3 rounded mb-4 text-sm text-slate-300">
-                <p><strong>Datos Bancarios / Pago Móvil:</strong></p>
-                <p>Banco: Banesco / Banco de Venezuela | Teléfono: 0414-XXXXXXX</p>
-                <p>Cédula: V-XXXXXXXX</p>
+            <!-- Selector de Cuenta Activa -->
+            <div class="mb-4">
+                <label class="block text-sm mb-1 font-semibold text-emerald-300">Seleccionar cuenta receptora:</label>
+                <select id="selectCuentaActiva" class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-slate-200">
+                    <option value="">Cargando cuentas...</option>
+                </select>
             </div>
 
             <!-- Zona de Pegado de Imagen (Ctrl+V) -->
             <div class="mb-4">
-                <label class="block mb-2 text-sm font-semibold">Haz clic en el recuadro y presiona <span class="text-emerald-400">Ctrl + V</span> para pegar la imagen del comprobante:</label>
+                <label class="block mb-2 text-sm font-semibold">Haz clic en el recuadro y presiona <span class="text-emerald-400">Ctrl + V</span> para pegar la imagen:</label>
                 <div id="zonaPegado" contenteditable="true" class="w-full h-36 p-3 rounded bg-slate-900 border-2 border-dashed border-slate-600 focus:outline-none focus:border-emerald-500 flex flex-col items-center justify-center text-center text-slate-400 cursor-pointer overflow-hidden">
-                    <span id="textoInstruccion">📋 Haz clic aquí y presiona Ctrl + V para pegar la imagen del comprobante de WhatsApp</span>
+                    <span id="textoInstruccion">📋 Haz clic aquí y presiona Ctrl + V para pegar el comprobante de WhatsApp</span>
                     <img id="vistaPrevia" class="hidden max-h-28 object-contain mt-2 rounded" alt="Comprobante pegado">
                 </div>
                 <div id="estadoOcr" class="text-xs text-amber-400 mt-1 font-semibold text-center"></div>
             </div>
 
-            <!-- Alertas Dinámicas -->
             <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
 
-            <!-- Formulario de Registro -->
+            <!-- Formulario de Registro Estructurado -->
             <div id="formularioRegistro" class="hidden space-y-3 border-t border-slate-700 pt-4">
                 <div>
-                    <label class="block text-sm">¿Cliente Frecuente?:</label>
+                    <label class="block text-sm font-semibold text-slate-300">¿CLIENTE FRECUENTE?:</label>
                     <select id="selectClienteFrecuente" onchange="cargarClienteFrecuente()" class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-300 mb-2">
                         <option value="">-- Nuevo cliente o escribir manual --</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm">Referencia Detectada:</label>
-                    <input type="text" id="refInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
+                    <label class="block text-sm font-bold text-rose-400">REFERENCIA:</label>
+                    <input type="text" id="refInput" readonly class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-slate-200 font-mono">
                 </div>
                 <div>
-                    <label class="block text-sm">Monto Detectado (Bs):</label>
-                    <input type="text" id="montoInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
+                    <label class="block text-sm font-bold text-rose-400">MONTO:</label>
+                    <input type="text" id="montoInput" readonly class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-slate-200 font-mono">
                 </div>
                 <div>
-                    <label class="block text-sm">Nombre del Cliente:</label>
-                    <input type="text" id="nombreCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="Nombre completo">
+                    <label class="block text-sm font-bold text-rose-400">NOMBRE DEL CLIENTE:</label>
+                    <input type="text" id="nombreCliente" class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-white" placeholder="Nombre completo">
                 </div>
                 <div>
-                    <label class="block text-sm">Número de Teléfono:</label>
-                    <input type="text" id="telefonoCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="04141234567">
+                    <label class="block text-sm font-bold text-rose-400">NUMERO DE TELEFONO:</label>
+                    <input type="text" id="telefonoCliente" class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-white" placeholder="04121234567">
                 </div>
                 
-                <div class="flex gap-2">
-                    <button onclick="guardarComprobante()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-semibold flex-1">Guardar y Acreditar Saldo</button>
-                    <button onclick="limpiarFormulario()" class="bg-rose-600 hover:bg-rose-500 px-4 py-2 rounded font-semibold">Limpiar</button>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="guardarComprobante()" class="bg-emerald-600 hover:bg-emerald-500 py-3 px-4 rounded font-bold flex-1 text-center shadow">GUARDAR</button>
+                    <button onclick="limpiarFormulario()" class="bg-rose-600 hover:bg-rose-500 py-3 px-4 rounded font-bold text-center">LIMPIAR</button>
                 </div>
             </div>
         </div>
 
-        <!-- SECCIÓN 2: CONTROL DE CLIENTES Y SALDOS -->
+        <!-- SECCIÓN 2: GESTIÓN DE CUENTAS BANCARIAS -->
+        <div id="seccion-cuentas" class="hidden bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+            <h2 class="text-2xl font-bold mb-4 text-emerald-400">Gestión de Cuentas Bancarias y Pago Móvil</h2>
+            
+            <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 mb-6 space-y-3">
+                <h3 class="font-bold text-lg text-amber-400">Agregar Nueva Cuenta</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" id="nuevaBanco" placeholder="Banco (Ej: Banco de Venezuela 0102)" class="p-2 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaTipo" placeholder="Tipo (VES / USD)" value="VES" class="p-2 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaNumero" placeholder="Número de cuenta (20 dígitos)" class="p-2 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaTelefono" placeholder="Teléfono Pago Móvil" class="p-2 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaCedula" placeholder="Cédula" class="p-2 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaTitular" placeholder="Titular" class="p-2 rounded bg-slate-800 border border-slate-600">
+                </div>
+                <button onclick="agregarCuenta()" class="bg-emerald-600 hover:bg-emerald-500 w-full py-2 rounded font-bold">Guardar Cuenta</button>
+            </div>
+
+            <h3 class="font-bold text-lg mb-3">Cuentas Registradas</h3>
+            <div id="listaCuentas" class="space-y-3"></div>
+        </div>
+
+        <!-- SECCIÓN 3: CONTROL DE CLIENTES Y SALDOS -->
         <div id="seccion-clientes" class="hidden bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
             <h2 class="text-2xl font-bold mb-4 text-emerald-400">Control de Saldo de Clientes</h2>
             <div class="mb-4">
@@ -82,24 +104,106 @@
 
     <script>
         let clientesCache = [];
+        let cuentasCache = [];
         let textoExtraidoGlobal = "";
 
+        window.onload = function() {
+            cargarCuentas();
+        };
+
         function cambiarTab(tab) {
+            document.getElementById('seccion-verificador').classList.add('hidden');
+            document.getElementById('seccion-cuentas').classList.add('hidden');
+            document.getElementById('seccion-clientes').classList.add('hidden');
+            
+            document.getElementById('btn-verificador').className = "py-2 px-4 font-bold text-slate-400 hover:text-white";
+            document.getElementById('btn-cuentas').className = "py-2 px-4 font-bold text-slate-400 hover:text-white";
+            document.getElementById('btn-clientes').className = "py-2 px-4 font-bold text-slate-400 hover:text-white";
+
             if (tab === 'verificador') {
                 document.getElementById('seccion-verificador').classList.remove('hidden');
-                document.getElementById('seccion-clientes').classList.add('hidden');
                 document.getElementById('btn-verificador').className = "py-2 px-4 font-bold border-b-2 border-emerald-500 text-emerald-400";
-                document.getElementById('btn-clientes').className = "py-2 px-4 font-bold text-slate-400 hover:text-white";
+                cargarCuentasSelector();
+            } else if (tab === 'cuentas') {
+                document.getElementById('seccion-cuentas').classList.remove('hidden');
+                document.getElementById('btn-cuentas').className = "py-2 px-4 font-bold border-b-2 border-emerald-500 text-emerald-400";
+                cargarCuentas();
             } else {
-                document.getElementById('seccion-verificador').classList.add('hidden');
                 document.getElementById('seccion-clientes').classList.remove('hidden');
                 document.getElementById('btn-clientes').className = "py-2 px-4 font-bold border-b-2 border-emerald-500 text-emerald-400";
-                document.getElementById('btn-verificador').className = "py-2 px-4 font-bold text-slate-400 hover:text-white";
                 cargarClientes();
             }
         }
 
-        // DETECTAR PEGADO DE IMAGEN (CTRL + V)
+        async function cargarCuentas() {
+            const res = await fetch('/api/cuentas');
+            cuentasCache = await res.json();
+            const contenedor = document.getElementById('listaCuentas');
+            contenedor.innerHTML = '';
+            if (cuentasCache.length === 0) {
+                contenedor.innerHTML = '<p class="text-slate-400 text-center">No hay cuentas registradas.</p>';
+                return;
+            }
+            cuentasCache.forEach(c => {
+                contenedor.innerHTML += `
+                    <div class="bg-slate-900 p-4 rounded border border-slate-700 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-emerald-400">${c.banco}</p>
+                            <p class="text-sm text-slate-300">Cuenta: ${c.numeroCuenta}</p>
+                            <p class="text-xs text-slate-400">Pago Móvil: ${c.telefonoPagoMovil} | Cédula: ${c.cedula} | Titular: ${c.titular}</p>
+                        </div>
+                        <button onclick="eliminarCuenta('${c._id}')" class="bg-rose-600 hover:bg-rose-500 px-3 py-1 rounded text-xs font-bold">Eliminar</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function cargarCuentasSelector() {
+            const res = await fetch('/api/cuentas');
+            cuentasCache = await res.json();
+            const select = document.getElementById('selectCuentaActiva');
+            select.innerHTML = '';
+            cuentasCache.forEach(c => {
+                select.innerHTML += `<option value="${c.numeroCuenta}">${c.banco} - ${c.numeroCuenta} (PM: ${c.telefonoPagoMovil})</option>`;
+            });
+        }
+
+        async function agregarCuenta() {
+            const cuenta = {
+                banco: document.getElementById('nuevaBanco').value,
+                tipoCuenta: document.getElementById('nuevaTipo').value,
+                numeroCuenta: document.getElementById('nuevaNumero').value,
+                telefonoPagoMovil: document.getElementById('nuevaTelefono').value,
+                cedula: document.getElementById('nuevaCedula').value,
+                titular: document.getElementById('nuevaTitular').value
+            };
+            if (!cuenta.banco || !cuenta.numeroCuenta || !cuenta.telefonoPagoMovil) {
+                alert('Por favor llena al menos el banco, número y teléfono.');
+                return;
+            }
+            const res = await fetch('/api/cuentas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cuenta)
+            });
+            const data = await res.json();
+            if (data.status === 'exito') {
+                document.getElementById('nuevaBanco').value = '';
+                document.getElementById('nuevaNumero').value = '';
+                document.getElementById('nuevaTelefono').value = '';
+                document.getElementById('nuevaCedula').value = '';
+                document.getElementById('nuevaTitular').value = '';
+                cargarCuentas();
+                alert('¡Cuenta agregada con éxito!');
+            }
+        }
+
+        async function eliminarCuenta(id) {
+            if (!confirm('¿Seguro que deseas eliminar esta cuenta?')) return;
+            await fetch(`/api/cuentas/${id}`, { method: 'DELETE' });
+            cargarCuentas();
+        }
+
         const zonaPegado = document.getElementById('zonaPegado');
         zonaPegado.addEventListener('paste', async (e) => {
             e.preventDefault();
@@ -118,7 +222,6 @@
                 return;
             }
 
-            // Mostrar vista previa de la imagen
             const reader = new FileReader();
             reader.onload = function(event) {
                 const img = document.getElementById('vistaPrevia');
@@ -128,20 +231,13 @@
             }
             reader.readAsDataURL(imagenFile);
 
-            // Leer la imagen usando Tesseract.js (OCR)
             document.getElementById('estadoOcr').innerText = "🔍 Leyendo comprobante y extrayendo datos...";
             
             try {
-                const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', {
-                    logger: m => {} 
-                });
-
+                const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', { logger: m => {} });
                 textoExtraidoGlobal = text;
                 document.getElementById('estadoOcr').innerText = "✅ ¡Lectura completada! Analizando referencia...";
-                
-                // Enviar texto extraído al servidor para validar duplicados y extraer datos
                 analizarTextoComprobante(text);
-
             } catch (error) {
                 document.getElementById('estadoOcr').innerText = "❌ Error al leer la imagen. Intenta con otra más clara.";
             }
@@ -149,11 +245,12 @@
 
         async function analizarTextoComprobante(texto) {
             const alerta = document.getElementById('alerta');
+            const cuentaSeleccionada = document.getElementById('selectCuentaActiva').value;
             
             const response = await fetch('/api/verificar-comprobante', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ textoComprobante: texto })
+                body: JSON.stringify({ textoComprobante: texto, cuentaDestino: cuentaSeleccionada })
             });
             const data = await response.json();
             
@@ -206,12 +303,13 @@
         async function guardarComprobante() {
             const nombre = document.getElementById('nombreCliente').value;
             const telefono = document.getElementById('telefonoCliente').value;
+            const cuentaSeleccionada = document.getElementById('selectCuentaActiva').value;
             const alerta = document.getElementById('alerta');
 
             const response = await fetch('/api/verificar-comprobante', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ textoComprobante: textoExtraidoGlobal, nombreCliente: nombre, telefono: telefono })
+                body: JSON.stringify({ textoComprobante: textoExtraidoGlobal, nombreCliente: nombre, telefono: telefono, cuentaDestino: cuentaSeleccionada })
             });
 
             const data = await response.json();
@@ -305,7 +403,6 @@
         }
 
         function limpiarFormulario() {
-            document.getElementById('textoComprobante').value = '';
             document.getElementById('nombreCliente').value = '';
             document.getElementById('telefonoCliente').value = '';
             document.getElementById('refInput').value = '';
