@@ -8,13 +8,9 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión a MongoDB Atlas optimizada para evitar timeouts (forzando IPv4 con family: 4)
+// Conexión directa a MongoDB Atlas
 const MONGO_URI = process.env.MONGO_URI;
-mongoose.connect(MONGO_URI, {
-    family: 4,
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-})
+mongoose.connect(MONGO_URI, { family: 4 })
 .then(async () => {
     console.log('Conectado a MongoDB Atlas con éxito');
     const count = await Cuenta.countDocuments();
@@ -31,7 +27,6 @@ mongoose.connect(MONGO_URI, {
 })
 .catch(err => console.error('Error conectando a MongoDB:', err));
 
-// Esquemas de Base de Datos
 const CuentaSchema = new mongoose.Schema({
     banco: { type: String, required: true },
     tipoCuenta: { type: String, default: 'VES' },
@@ -65,7 +60,6 @@ const ClienteSchema = new mongoose.Schema({
 });
 const Cliente = mongoose.model('Cliente', ClienteSchema);
 
-// Rutas de Cuentas
 app.get('/api/cuentas', async (req, res) => {
     try {
         const cuentas = await Cuenta.find();
@@ -94,57 +88,63 @@ app.delete('/api/cuentas/:id', async (req, res) => {
     }
 });
 
-// Ruta para verificar duplicados y guardar
-app.post('/api/verificar-comprobante', async (req, res) => {
+// Ruta única para guardar el pago y actualizar saldo del cliente
+app.post('/api/guardar-pago', async (req, res) => {
     try {
         const { referencia, monto, nombreCliente, telefono, cuentaDestino } = req.body;
         
-        if (!referencia) return res.status(400).json({ status: 'error', message: 'Falta la referencia.' });
+        if (!referencia || !nombreCliente || !telefono) {
+            return res.status(400).json({ status: 'error', message: 'Faltan datos obligatorios.' });
+        }
 
-        // Comprobar si ya existe
+        // Verificar si la referencia ya fue usada
         const existe = await Comprobante.findOne({ referencia: referencia.trim() });
         if (existe) {
             return res.status(400).json({
                 status: 'duplicado',
-                message: `¡ALERTA! Referencia usada por ${existe.nombreCliente} el día ${new Date(existe.fecha).toLocaleDateString()} (Tel: ${existe.telefono}).`
+                message: `¡ALERTA! Referencia ya usada por ${existe.nombreCliente} (Tel: ${existe.telefono}).`
             });
         }
 
-        // Si se envían los datos para guardar
-        if (nombreCliente && telefono) {
-            const montoNum = parseFloat(String(monto).replace(/\./g, '').replace(',', '.'));
-            const montoFinal = isNaN(montoNum) ? 0 : montoNum;
+        const montoNum = parseFloat(String(monto).replace(/\./g, '').replace(',', '.'));
+        const montoFinal = isNaN(montoNum) ? 0 : montoNum;
 
-            const nuevoComprobante = new Comprobante({ 
-                referencia: referencia.trim(), 
-                monto: montoFinal, 
-                nombreCliente, 
-                telefono,
-                cuentaDestino: cuentaDestino || 'Principal'
+        // Guardar comprobante
+        const nuevoComprobante = new Comprobante({ 
+            referencia: referencia.trim(), 
+            monto: montoFinal, 
+            nombreCliente: nombreCliente.trim(), 
+            telefono: telefono.trim(),
+            cuentaDestino: cuentaDestino || 'Principal'
+        });
+        await nuevoComprobante.save();
+
+        // Actualizar o crear cliente y sumar saldo
+        let cliente = await Cliente.findOne({ telefono: telefono.trim() });
+        if (!cliente) {
+            cliente = new Cliente({ 
+                nombre: nombreCliente.trim(), 
+                telefono: telefono.trim(), 
+                saldo: montoFinal, 
+                historial: [] 
             });
-            await nuevoComprobante.save();
-
-            let cliente = await Cliente.findOne({ telefono });
-            if (!cliente) {
-                cliente = new Cliente({ nombre: nombreCliente, telefono, saldo: montoFinal, historial: [] });
-            } else {
-                cliente.saldo += montoFinal;
-                cliente.nombre = nombreCliente;
-            }
-            cliente.historial.push({ tipo: 'PAGO', monto: montoFinal, descripcion: `Pago ref: ${referencia}` });
-            await cliente.save();
-
-            return res.json({ status: 'exito', message: 'Comprobante verificado, guardado y saldo acreditado con éxito.' });
+        } else {
+            cliente.saldo += montoFinal;
+            cliente.nombre = nombreCliente.trim();
         }
+        
+        cliente.historial.push({ tipo: 'PAGO', monto: montoFinal, descripcion: `Pago ref: ${referencia}` });
+        await cliente.save();
 
-        res.json({ status: 'libre', message: 'Referencia disponible.' });
+        res.json({ status: 'exito', message: '¡Guardado y saldo acreditado con éxito!' });
     } catch (error) {
-        if (error.code === 11000) return res.status(400).json({ status: 'duplicado', message: '¡Esta referencia ya está registrada!' });
+        if (error.code === 11000) {
+            return res.status(400).json({ status: 'duplicado', message: '¡Esta referencia ya se encuentra registrada!' });
+        }
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
 
-// Rutas de Clientes
 app.get('/api/clientes', async (req, res) => {
     try {
         const clientes = await Cliente.find().sort({ nombre: 1 });
