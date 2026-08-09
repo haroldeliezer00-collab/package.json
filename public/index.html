@@ -2,59 +2,152 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Validador de Pagos - Centro de Apuestas</title>
+    <title>Centro de Apuestas - Validador con Imagen</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librería gratuita de OCR para leer imágenes en el navegador -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js'></script>
 </head>
-<body class="bg-slate-900 text-white p-6">
-    <div class="max-w-xl mx-auto bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-        <h2 class="text-2xl font-bold mb-4 text-emerald-400">Verificador de Pagos</h2>
-        
-        <!-- Datos Bancarios de Referencia -->
-        <div class="bg-slate-700 p-3 rounded mb-4 text-sm text-slate-300">
-            <p><strong>Datos Bancarios / Pago Móvil:</strong></p>
-            <p>Banco: Banesco / Banco de Venezuela | Teléfono: 0414-XXXXXXX</p>
-            <p>Cédula: V-XXXXXXXX</p>
+<body class="bg-slate-900 text-white p-4 md:p-6">
+    <div class="max-w-3xl mx-auto">
+        <!-- Navegación por pestañas -->
+        <div class="flex border-b border-slate-700 mb-6">
+            <button onclick="cambiarTab('verificador')" id="btn-verificador" class="py-2 px-4 font-bold border-b-2 border-emerald-500 text-emerald-400">Verificador de Pagos</button>
+            <button onclick="cambiarTab('clientes')" id="btn-clientes" class="py-2 px-4 font-bold text-slate-400 hover:text-white">Control de Clientes & Saldo</button>
         </div>
 
-        <!-- Pegar Comprobante -->
-        <div class="mb-4">
-            <label class="block mb-2 text-sm">Pega el texto del comprobante aquí:</label>
-            <textarea id="textoComprobante" rows="4" class="w-full p-3 rounded bg-slate-900 border border-slate-600 focus:outline-none focus:border-emerald-500" placeholder="Pega el mensaje del banco..."></textarea>
-            <button onclick="analizarComprobante()" class="mt-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-semibold w-full">Analizar Comprobante</button>
-        </div>
-
-        <!-- Alertas Dinámicas -->
-        <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
-
-        <!-- Formulario de Registro -->
-        <div id="formularioRegistro" class="hidden space-y-3 border-t border-slate-700 pt-4">
-            <div>
-                <label class="block text-sm">Referencia Detectada:</label>
-                <input type="text" id="refInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
-            </div>
-            <div>
-                <label class="block text-sm">Monto Detectado (Bs):</label>
-                <input type="text" id="montoInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
-            </div>
-            <div>
-                <label class="block text-sm">Nombre del Cliente:</label>
-                <input type="text" id="nombreCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="Nombre completo">
-            </div>
-            <div>
-                <label class="block text-sm">Número de Teléfono:</label>
-                <input type="text" id="telefonoCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="04141234567">
-            </div>
+        <!-- SECCIÓN 1: VERIFICADOR DE PAGOS -->
+        <div id="seccion-verificador" class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+            <h2 class="text-2xl font-bold mb-4 text-emerald-400">Validador de Comprobantes por Imagen</h2>
             
-            <div class="flex gap-2">
-                <button onclick="guardarComprobante()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-semibold flex-1">Guardar Pago</button>
-                <button onclick="limpiarFormulario()" class="bg-rose-600 hover:bg-rose-500 px-4 py-2 rounded font-semibold">Limpiar</button>
+            <div class="bg-slate-700 p-3 rounded mb-4 text-sm text-slate-300">
+                <p><strong>Datos Bancarios / Pago Móvil:</strong></p>
+                <p>Banco: Banesco / Banco de Venezuela | Teléfono: 0414-XXXXXXX</p>
+                <p>Cédula: V-XXXXXXXX</p>
             </div>
+
+            <!-- Zona de Pegado de Imagen (Ctrl+V) -->
+            <div class="mb-4">
+                <label class="block mb-2 text-sm font-semibold">Haz clic en el recuadro y presiona <span class="text-emerald-400">Ctrl + V</span> para pegar la imagen del comprobante:</label>
+                <div id="zonaPegado" contenteditable="true" class="w-full h-36 p-3 rounded bg-slate-900 border-2 border-dashed border-slate-600 focus:outline-none focus:border-emerald-500 flex flex-col items-center justify-center text-center text-slate-400 cursor-pointer overflow-hidden">
+                    <span id="textoInstruccion">📋 Haz clic aquí y presiona Ctrl + V para pegar la imagen del comprobante de WhatsApp</span>
+                    <img id="vistaPrevia" class="hidden max-h-28 object-contain mt-2 rounded" alt="Comprobante pegado">
+                </div>
+                <div id="estadoOcr" class="text-xs text-amber-400 mt-1 font-semibold text-center"></div>
+            </div>
+
+            <!-- Alertas Dinámicas -->
+            <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
+
+            <!-- Formulario de Registro -->
+            <div id="formularioRegistro" class="hidden space-y-3 border-t border-slate-700 pt-4">
+                <div>
+                    <label class="block text-sm">¿Cliente Frecuente?:</label>
+                    <select id="selectClienteFrecuente" onchange="cargarClienteFrecuente()" class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-300 mb-2">
+                        <option value="">-- Nuevo cliente o escribir manual --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm">Referencia Detectada:</label>
+                    <input type="text" id="refInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
+                </div>
+                <div>
+                    <label class="block text-sm">Monto Detectado (Bs):</label>
+                    <input type="text" id="montoInput" readonly class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-400">
+                </div>
+                <div>
+                    <label class="block text-sm">Nombre del Cliente:</label>
+                    <input type="text" id="nombreCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="Nombre completo">
+                </div>
+                <div>
+                    <label class="block text-sm">Número de Teléfono:</label>
+                    <input type="text" id="telefonoCliente" class="w-full p-2 rounded bg-slate-900 border border-slate-600" placeholder="04141234567">
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="guardarComprobante()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded font-semibold flex-1">Guardar y Acreditar Saldo</button>
+                    <button onclick="limpiarFormulario()" class="bg-rose-600 hover:bg-rose-500 px-4 py-2 rounded font-semibold">Limpiar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: CONTROL DE CLIENTES Y SALDOS -->
+        <div id="seccion-clientes" class="hidden bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+            <h2 class="text-2xl font-bold mb-4 text-emerald-400">Control de Saldo de Clientes</h2>
+            <div class="mb-4">
+                <input type="text" id="buscarCliente" onkeyup="filtrarClientes()" placeholder="Buscar cliente por nombre o teléfono..." class="w-full p-3 rounded bg-slate-900 border border-slate-600">
+            </div>
+            <div id="listaClientes" class="space-y-4 max-h-[600px] overflow-y-auto pr-2"></div>
         </div>
     </div>
 
     <script>
-        async function analizarComprobante() {
-            const texto = document.getElementById('textoComprobante').value;
+        let clientesCache = [];
+        let textoExtraidoGlobal = "";
+
+        function cambiarTab(tab) {
+            if (tab === 'verificador') {
+                document.getElementById('seccion-verificador').classList.remove('hidden');
+                document.getElementById('seccion-clientes').classList.add('hidden');
+                document.getElementById('btn-verificador').className = "py-2 px-4 font-bold border-b-2 border-emerald-500 text-emerald-400";
+                document.getElementById('btn-clientes').className = "py-2 px-4 font-bold text-slate-400 hover:text-white";
+            } else {
+                document.getElementById('seccion-verificador').classList.add('hidden');
+                document.getElementById('seccion-clientes').classList.remove('hidden');
+                document.getElementById('btn-clientes').className = "py-2 px-4 font-bold border-b-2 border-emerald-500 text-emerald-400";
+                document.getElementById('btn-verificador').className = "py-2 px-4 font-bold text-slate-400 hover:text-white";
+                cargarClientes();
+            }
+        }
+
+        // DETECTAR PEGADO DE IMAGEN (CTRL + V)
+        const zonaPegado = document.getElementById('zonaPegado');
+        zonaPegado.addEventListener('paste', async (e) => {
+            e.preventDefault();
+            const items = e.clipboardData.items;
+            let imagenFile = null;
+
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    imagenFile = item.getAsFile();
+                    break;
+                }
+            }
+
+            if (!imagenFile) {
+                alert('Por favor pega una imagen válida de WhatsApp.');
+                return;
+            }
+
+            // Mostrar vista previa de la imagen
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.getElementById('vistaPrevia');
+                img.src = event.target.result;
+                img.classList.remove('hidden');
+                document.getElementById('textoInstruccion').classList.add('hidden');
+            }
+            reader.readAsDataURL(imagenFile);
+
+            // Leer la imagen usando Tesseract.js (OCR)
+            document.getElementById('estadoOcr').innerText = "🔍 Leyendo comprobante y extrayendo datos...";
+            
+            try {
+                const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', {
+                    logger: m => {} 
+                });
+
+                textoExtraidoGlobal = text;
+                document.getElementById('estadoOcr').innerText = "✅ ¡Lectura completada! Analizando referencia...";
+                
+                // Enviar texto extraído al servidor para validar duplicados y extraer datos
+                analizarTextoComprobante(text);
+
+            } catch (error) {
+                document.getElementById('estadoOcr').innerText = "❌ Error al leer la imagen. Intenta con otra más clara.";
+            }
+        });
+
+        async function analizarTextoComprobante(texto) {
             const alerta = document.getElementById('alerta');
             
             const response = await fetch('/api/verificar-comprobante', {
@@ -62,7 +155,6 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ textoComprobante: texto })
             });
-            
             const data = await response.json();
             
             if (data.status === 'duplicado') {
@@ -70,13 +162,16 @@
                 alerta.innerText = data.message;
                 alerta.classList.remove('hidden');
                 document.getElementById('formularioRegistro').classList.add('hidden');
+                document.getElementById('estadoOcr').innerText = "❌ Comprobante duplicado detectado.";
             } else if (data.status === 'analizado') {
                 alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-emerald-600 text-white";
                 alerta.innerText = "¡Comprobante verificado con éxito!";
                 alerta.classList.remove('hidden');
-                
                 document.getElementById('refInput').value = data.referencia;
                 document.getElementById('montoInput').value = data.monto;
+                document.getElementById('formularioRegistro').classList.remove('hidden');
+                document.getElementById('estadoOcr').innerText = "✨ ¡Datos listos para registrar!";
+                cargarSelectClientesFrecuentes();
             } else {
                 alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-amber-600 text-white";
                 alerta.innerText = data.message;
@@ -84,8 +179,31 @@
             }
         }
 
+        async function cargarSelectClientesFrecuentes() {
+            const res = await fetch('/api/clientes');
+            clientesCache = await res.json();
+            const select = document.getElementById('selectClienteFrecuente');
+            select.innerHTML = '<option value="">-- Nuevo cliente o escribir manual --</option>';
+            clientesCache.forEach(c => {
+                select.innerHTML += `<option value="${c._id}">${c.nombre} (${c.telefono}) - Saldo: Bs. ${c.saldo.toFixed(2)}</option>`;
+            });
+        }
+
+        function cargarClienteFrecuente() {
+            const id = document.getElementById('selectClienteFrecuente').value;
+            if (!id) {
+                document.getElementById('nombreCliente').value = '';
+                document.getElementById('telefonoCliente').value = '';
+                return;
+            }
+            const cliente = clientesCache.find(c => c._id === id);
+            if (cliente) {
+                document.getElementById('nombreCliente').value = cliente.nombre;
+                document.getElementById('telefonoCliente').value = cliente.telefono;
+            }
+        }
+
         async function guardarComprobante() {
-            const texto = document.getElementById('textoComprobante').value;
             const nombre = document.getElementById('nombreCliente').value;
             const telefono = document.getElementById('telefonoCliente').value;
             const alerta = document.getElementById('alerta');
@@ -93,18 +211,97 @@
             const response = await fetch('/api/verificar-comprobante', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ textoComprobante: texto, nombreCliente: nombre, telefono: telefono })
+                body: JSON.stringify({ textoComprobante: textoExtraidoGlobal, nombreCliente: nombre, telefono: telefono })
             });
 
             const data = await response.json();
             if (data.status === 'exito') {
                 alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-emerald-600 text-white";
-                alerta.innerText = "¡Guardado exitosamente en la nube!";
+                alerta.innerText = "¡Pago guardado y saldo acreditado con éxito!";
                 document.getElementById('formularioRegistro').classList.add('hidden');
             } else {
                 alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
                 alerta.innerText = data.message;
             }
+        }
+
+        async function cargarClientes() {
+            const res = await fetch('/api/clientes');
+            clientesCache = await res.json();
+            mostrarClientes(clientesCache);
+        }
+
+        function mostrarClientes(clientes) {
+            const contenedor = document.getElementById('listaClientes');
+            contenedor.innerHTML = '';
+            if (clientes.length === 0) {
+                contenedor.innerHTML = '<p class="text-center text-slate-400">No hay clientes registrados aún.</p>';
+                return;
+            }
+
+            clientes.forEach(c => {
+                const colorSaldo = c.saldo < 0 ? 'text-rose-400' : 'text-emerald-400';
+                contenedor.innerHTML += `
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-lg">${c.nombre}</h3>
+                                <p class="text-xs text-slate-400">Tel: ${c.telefono}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm text-slate-400">Saldo:</span>
+                                <span class="text-xl font-bold ${colorSaldo}">Bs. ${c.saldo.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2 border-t border-slate-800">
+                            <button onclick="ejecutarTransaccion('${c._id}', 'JUGADA')" class="bg-amber-600 hover:bg-amber-500 text-xs py-1.5 px-2 rounded font-semibold">🎲 Jugar</button>
+                            <button onclick="ejecutarTransaccion('${c._id}', 'PREMIO')" class="bg-emerald-600 hover:bg-emerald-500 text-xs py-1.5 px-2 rounded font-semibold">🏆 Premio</button>
+                            <button onclick="ejecutarTransaccion('${c._id}', 'RETIRO')" class="bg-blue-600 hover:bg-blue-500 text-xs py-1.5 px-2 rounded font-semibold">💸 Retirar</button>
+                            <button onclick="enviarWhatsApp('${c.telefono}', '${c.nombre}', ${c.saldo})" class="bg-green-600 hover:bg-green-500 text-xs py-1.5 px-2 rounded font-semibold">💬 WhatsApp</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function ejecutarTransaccion(clienteId, tipo) {
+            let titulo = `Monto a descontar para ${tipo}:`;
+            if (tipo === 'PREMIO') titulo = `Monto del Premio a sumar:`;
+            
+            const montoStr = prompt(titulo);
+            if (!montoStr) return;
+            const monto = parseFloat(montoStr);
+            if (isNaN(monto) || monto <= 0) {
+                alert('Monto inválido');
+                return;
+            }
+
+            const res = await fetch('/api/cliente/transaccion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clienteId, tipo, monto })
+            });
+            const data = await res.json();
+            if (data.status === 'exito') {
+                cargarClientes();
+            } else {
+                alert(data.error || 'Error al procesar');
+            }
+        }
+
+        function enviarWhatsApp(telefono, nombre, saldo) {
+            const estado = saldo < 0 ? 'Negativo ⚠️' : 'Positivo ✅';
+            const mensaje = `Hola ${nombre}, su saldo actual es de Bs. ${saldo.toFixed(2)} (${estado}). Suerte y gracias por su confianza en Centro de Apuestas Harold José.`;
+            navigator.clipboard.writeText(mensaje);
+            const url = `https://wa.me/58${telefono.replace(/^0/, '')}?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+
+        function filtrarClientes() {
+            const query = document.getElementById('buscarCliente').value.toLowerCase();
+            const filtrados = clientesCache.filter(c => c.nombre.toLowerCase().includes(query) || c.telefono.includes(query));
+            mostrarClientes(filtrados);
         }
 
         function limpiarFormulario() {
@@ -113,8 +310,11 @@
             document.getElementById('telefonoCliente').value = '';
             document.getElementById('refInput').value = '';
             document.getElementById('montoInput').value = '';
+            document.getElementById('vistaPrevia').classList.add('hidden');
+            document.getElementById('textoInstruccion').classList.remove('hidden');
             document.getElementById('formularioRegistro').classList.add('hidden');
             document.getElementById('alerta').classList.add('hidden');
+            document.getElementById('estadoOcr').innerText = '';
         }
     </script>
 </body>
