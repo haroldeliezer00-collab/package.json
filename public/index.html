@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Centro de Apuestas - Validador Integral</title>
+    <title>Centro de Apuestas - Harold José</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js'></script>
 </head>
@@ -15,10 +15,21 @@
             <button onclick="cambiarTab('clientes')" id="btn-clientes" class="py-2 px-4 font-bold text-slate-400 hover:text-white">Control de Clientes & Saldo</button>
         </div>
 
-        <!-- SECCIÓN 1: VERIFICADOR DE PAGOS -->
+        <!-- SECCIÓN 1: VERIFICADOR DE PAGOS (Maqueta Exacta) -->
         <div id="seccion-verificador" class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
             <h2 class="text-2xl font-bold mb-4 text-emerald-400">Validador de Comprobantes</h2>
             
+            <!-- Tarjeta de Datos de la Agencia -->
+            <div class="bg-sky-950 p-4 rounded-lg border border-sky-800 mb-4 text-sm text-sky-200">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-base text-amber-300">💳 Datos Agencia Harold Jose</span>
+                    <button onclick="copiarDatosAgencia()" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded font-bold">📋 Copiar todos los datos</button>
+                </div>
+                <p><strong>📱 PAGO MÓVIL:</strong> Banco Venezuela (0102) | Tel: 04124489363 | Cédula: V18274410</p>
+                <hr class="border-sky-800 my-2">
+                <p><strong>🏦 TRANSFERENCIA:</strong> VES | Cuenta: 01020613810000317201 | Titular: Harold Eliezer Galea Sanchez</p>
+            </div>
+
             <!-- Selector de Cuenta Activa -->
             <div class="mb-4">
                 <label class="block text-sm mb-1 font-semibold text-emerald-300">Seleccionar cuenta receptora:</label>
@@ -30,43 +41,47 @@
             <!-- Zona de Pegado de Imagen (Ctrl+V) -->
             <div class="mb-4">
                 <label class="block mb-2 text-sm font-semibold">Haz clic en el recuadro y presiona <span class="text-emerald-400">Ctrl + V</span> para pegar la imagen:</label>
-                <div id="zonaPegado" contenteditable="true" class="w-full h-36 p-3 rounded bg-slate-900 border-2 border-dashed border-slate-600 focus:outline-none focus:border-emerald-500 flex flex-col items-center justify-center text-center text-slate-400 cursor-pointer overflow-hidden">
-                    <span id="textoInstruccion">📋 Haz clic aquí y presiona Ctrl + V para pegar el comprobante de WhatsApp</span>
-                    <img id="vistaPrevia" class="hidden max-h-28 object-contain mt-2 rounded" alt="Comprobante pegado">
+                <div id="zonaPegado" contenteditable="true" class="w-full h-32 p-3 rounded bg-slate-900 border-2 border-dashed border-slate-600 focus:outline-none focus:border-emerald-500 flex flex-col items-center justify-center text-center text-slate-400 cursor-pointer overflow-hidden">
+                    <span id="textoInstruccion">📋 Haz clic aquí y presiona Ctrl + V para pegar el comprobante</span>
+                    <img id="vistaPrevia" class="hidden max-h-24 object-contain mt-2 rounded" alt="Comprobante pegado">
                 </div>
                 <div id="estadoOcr" class="text-xs text-amber-400 mt-1 font-semibold text-center"></div>
             </div>
 
             <div id="alerta" class="hidden p-4 rounded mb-4 font-semibold text-center"></div>
 
-            <!-- Formulario de Registro Estructurado -->
-            <div id="formularioRegistro" class="hidden space-y-3 border-t border-slate-700 pt-4">
+            <!-- Formulario Ordenado según Maqueta -->
+            <div id="formularioRegistro" class="hidden space-y-4 border-t border-slate-700 pt-4">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-300">¿CLIENTE FRECUENTE?:</label>
-                    <select id="selectClienteFrecuente" onchange="cargarClienteFrecuente()" class="w-full p-2 rounded bg-slate-900 border border-slate-600 text-slate-300 mb-2">
+                    <label class="block text-sm font-semibold text-slate-300 mb-1">¿CLIENTE FRECUENTE?:</label>
+                    <select id="selectClienteFrecuente" onchange="cargarClienteFrecuente()" class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-slate-300">
                         <option value="">-- Nuevo cliente o escribir manual --</option>
                     </select>
                 </div>
+
                 <div>
-                    <label class="block text-sm font-bold text-rose-400">REFERENCIA:</label>
-                    <input type="text" id="refInput" readonly class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-slate-200 font-mono">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Referencia leída aquí</label>
+                    <input type="text" id="refInput" readonly class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
                 </div>
+
                 <div>
-                    <label class="block text-sm font-bold text-rose-400">MONTO:</label>
-                    <input type="text" id="montoInput" readonly class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-slate-200 font-mono">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Monto del comprobante leído aquí</label>
+                    <input type="text" id="montoInput" readonly class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-emerald-400 font-mono font-bold text-lg">
                 </div>
+
                 <div>
-                    <label class="block text-sm font-bold text-rose-400">NOMBRE DEL CLIENTE:</label>
-                    <input type="text" id="nombreCliente" class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-white" placeholder="Nombre completo">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Yo coloco el nombre aquí</label>
+                    <input type="text" id="nombreCliente" class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-white font-semibold" placeholder="Nombre completo del cliente">
                 </div>
+
                 <div>
-                    <label class="block text-sm font-bold text-rose-400">NUMERO DE TELEFONO:</label>
-                    <input type="text" id="telefonoCliente" class="w-full p-2.5 rounded bg-slate-900 border border-slate-600 text-white" placeholder="04121234567">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Yo coloco el número tlf aquí</label>
+                    <input type="text" id="telefonoCliente" class="w-full p-3 rounded bg-slate-900 border border-slate-600 text-white font-semibold" placeholder="04124489363">
                 </div>
                 
                 <div class="flex gap-2 pt-2">
-                    <button onclick="guardarComprobante()" class="bg-emerald-600 hover:bg-emerald-500 py-3 px-4 rounded font-bold flex-1 text-center shadow">GUARDAR</button>
-                    <button onclick="limpiarFormulario()" class="bg-rose-600 hover:bg-rose-500 py-3 px-4 rounded font-bold text-center">LIMPIAR</button>
+                    <button onclick="guardarComprobante()" class="bg-amber-600 hover:bg-amber-500 py-4 px-4 rounded-xl font-black text-white text-lg flex-1 text-center shadow-lg uppercase tracking-wider">GUARDAR</button>
+                    <button onclick="limpiarFormulario()" class="bg-rose-600 hover:bg-rose-500 py-4 px-4 rounded-xl font-bold text-white text-center">Limpiar</button>
                 </div>
             </div>
         </div>
@@ -78,14 +93,14 @@
             <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 mb-6 space-y-3">
                 <h3 class="font-bold text-lg text-amber-400">Agregar Nueva Cuenta</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" id="nuevaBanco" placeholder="Banco (Ej: Banco de Venezuela 0102)" class="p-2 rounded bg-slate-800 border border-slate-600">
-                    <input type="text" id="nuevaTipo" placeholder="Tipo (VES / USD)" value="VES" class="p-2 rounded bg-slate-800 border border-slate-600">
-                    <input type="text" id="nuevaNumero" placeholder="Número de cuenta (20 dígitos)" class="p-2 rounded bg-slate-800 border border-slate-600">
-                    <input type="text" id="nuevaTelefono" placeholder="Teléfono Pago Móvil" class="p-2 rounded bg-slate-800 border border-slate-600">
-                    <input type="text" id="nuevaCedula" placeholder="Cédula" class="p-2 rounded bg-slate-800 border border-slate-600">
-                    <input type="text" id="nuevaTitular" placeholder="Titular" class="p-2 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaBanco" placeholder="Banco (Ej: Banesco 0134)" class="p-2.5 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaTipo" placeholder="Tipo (VES / USD)" value="VES" class="p-2.5 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaNumero" placeholder="Número de cuenta" class="p-2.5 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaTelefono" placeholder="Teléfono Pago Móvil" class="p-2.5 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaCedula" placeholder="Cédula" class="p-2.5 rounded bg-slate-800 border border-slate-600">
+                    <input type="text" id="nuevaTitular" placeholder="Titular" class="p-2.5 rounded bg-slate-800 border border-slate-600">
                 </div>
-                <button onclick="agregarCuenta()" class="bg-emerald-600 hover:bg-emerald-500 w-full py-2 rounded font-bold">Guardar Cuenta</button>
+                <button onclick="agregarCuenta()" class="bg-emerald-600 hover:bg-emerald-500 w-full py-2.5 rounded font-bold">Guardar Cuenta</button>
             </div>
 
             <h3 class="font-bold text-lg mb-3">Cuentas Registradas</h3>
@@ -204,6 +219,12 @@
             cargarCuentas();
         }
 
+        function copiarDatosAgencia() {
+            const texto = "PAGO MÓVIL:\nBanco Venezuela (0102)\nTel: 04124489363\nCédula: V18274410\n\nTRANSFERENCIA:\nTipo de cuenta: VES\nCuenta: 01020613810000317201\nCédula: V18274410\nTitular: Harold Eliezer Galea Sanchez";
+            navigator.clipboard.writeText(texto);
+            alert('¡Datos de la agencia copiados al portapapeles!');
+        }
+
         const zonaPegado = document.getElementById('zonaPegado');
         zonaPegado.addEventListener('paste', async (e) => {
             e.preventDefault();
@@ -261,9 +282,7 @@
                 document.getElementById('formularioRegistro').classList.add('hidden');
                 document.getElementById('estadoOcr').innerText = "❌ Comprobante duplicado detectado.";
             } else if (data.status === 'analizado') {
-                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-emerald-600 text-white";
-                alerta.innerText = "¡Comprobante verificado con éxito!";
-                alerta.classList.remove('hidden');
+                alerta.className = "hidden";
                 document.getElementById('refInput').value = data.referencia;
                 document.getElementById('montoInput').value = data.monto;
                 document.getElementById('formularioRegistro').classList.remove('hidden');
@@ -306,6 +325,11 @@
             const cuentaSeleccionada = document.getElementById('selectCuentaActiva').value;
             const alerta = document.getElementById('alerta');
 
+            if (!nombre || !telefono) {
+                alert('Por favor ingresa el nombre y número de teléfono del cliente.');
+                return;
+            }
+
             const response = await fetch('/api/verificar-comprobante', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -314,12 +338,14 @@
 
             const data = await response.json();
             if (data.status === 'exito') {
-                alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-emerald-600 text-white";
-                alerta.innerText = "¡Pago guardado y saldo acreditado con éxito!";
-                document.getElementById('formularioRegistro').classList.add('hidden');
+                alert('¡Pago guardado y saldo acreditado con éxito!');
+                limpiarFormulario();
+                // Salto automático a la pestaña de Control de Clientes & Saldo
+                cambiarTab('clientes');
             } else {
                 alerta.className = "p-4 rounded mb-4 font-semibold text-center bg-rose-600 text-white";
                 alerta.innerText = data.message;
+                alerta.classList.remove('hidden');
             }
         }
 
