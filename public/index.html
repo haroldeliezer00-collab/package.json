@@ -255,7 +255,8 @@
             try {
                 const { data: { text } } = await Tesseract.recognize(imagenFile, 'spa+eng', { logger: m => {} });
                 
-                const refMatch = text.match(/ref(?:erencia)?[:\s#]*(\d{4,10})/i) || text.match(/(\d{6,10})/);
+                // Expresión mejorada para capturar los 12 dígitos exactos de operación del BDV
+                const refMatch = text.match(/operaci[oó]n[:\s#]*(\d{10,14})/i) || text.match(/ref(?:erencia)?[:\s#]*(\d{10,14})/i) || text.match(/(\d{12})/);
                 const montoMatch = text.match(/(?:bs\.?|bolivares|mt)\s*([\d\.,]+)/i) || text.match(/([\d\.]+(?:,\d{2})?)/);
 
                 document.getElementById('refInput').value = refMatch ? refMatch[1] : "";
