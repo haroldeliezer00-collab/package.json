@@ -8,10 +8,11 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión a MongoDB Atlas optimizada para evitar timeouts
+// Conexión a MongoDB Atlas optimizada para evitar timeouts (forzando IPv4 con family: 4)
 const MONGO_URI = process.env.MONGO_URI;
 mongoose.connect(MONGO_URI, {
-    serverSelectionTimeoutMS: 15000,
+    family: 4,
+    serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
 })
 .then(async () => {
@@ -93,21 +94,15 @@ app.delete('/api/cuentas/:id', async (req, res) => {
     }
 });
 
-// Ruta para verificar y guardar comprobante
+// Ruta para verificar duplicados y guardar
 app.post('/api/verificar-comprobante', async (req, res) => {
     try {
-        const { textoComprobante, nombreCliente, telefono, cuentaDestino } = req.body;
-        if (!textoComprobante) return res.status(400).json({ status: 'error', message: 'El texto está vacío.' });
+        const { referencia, monto, nombreCliente, telefono, cuentaDestino } = req.body;
+        
+        if (!referencia) return res.status(400).json({ status: 'error', message: 'Falta la referencia.' });
 
-        const refMatch = textoComprobante.match(/ref(?:erencia)?[:\s#]*(\d{4,10})/i) || textoComprobante.match(/(\d{6,10})/);
-        const montoMatch = textoComprobante.match(/(?:bs\.?|bolivares|mt)\s*([\d\.,]+)/i) || textoComprobante.match(/([\d\.]+(?:,\d{2})?)/);
-
-        if (!refMatch) return res.status(400).json({ status: 'error', message: 'No se pudo detectar el número de referencia.' });
-
-        const referenciaEncontrada = refMatch[1];
-        const montoEncontrado = montoMatch ? montoMatch[1] : "0.00";
-
-        const existe = await Comprobante.findOne({ referencia: referenciaEncontrada });
+        // Comprobar si ya existe
+        const existe = await Comprobante.findOne({ referencia: referencia.trim() });
         if (existe) {
             return res.status(400).json({
                 status: 'duplicado',
@@ -115,12 +110,13 @@ app.post('/api/verificar-comprobante', async (req, res) => {
             });
         }
 
+        // Si se envían los datos para guardar
         if (nombreCliente && telefono) {
-            const montoNum = parseFloat(montoEncontrado.replace(/\./g, '').replace(',', '.'));
+            const montoNum = parseFloat(String(monto).replace(/\./g, '').replace(',', '.'));
             const montoFinal = isNaN(montoNum) ? 0 : montoNum;
 
             const nuevoComprobante = new Comprobante({ 
-                referencia: referenciaEncontrada, 
+                referencia: referencia.trim(), 
                 monto: montoFinal, 
                 nombreCliente, 
                 telefono,
@@ -135,13 +131,13 @@ app.post('/api/verificar-comprobante', async (req, res) => {
                 cliente.saldo += montoFinal;
                 cliente.nombre = nombreCliente;
             }
-            cliente.historial.push({ tipo: 'PAGO', monto: montoFinal, descripcion: `Pago ref: ${referenciaEncontrada}` });
+            cliente.historial.push({ tipo: 'PAGO', monto: montoFinal, descripcion: `Pago ref: ${referencia}` });
             await cliente.save();
 
             return res.json({ status: 'exito', message: 'Comprobante verificado, guardado y saldo acreditado con éxito.' });
         }
 
-        res.json({ status: 'analizado', referencia: referenciaEncontrada, monto: montoEncontrado });
+        res.json({ status: 'libre', message: 'Referencia disponible.' });
     } catch (error) {
         if (error.code === 11000) return res.status(400).json({ status: 'duplicado', message: '¡Esta referencia ya está registrada!' });
         res.status(500).json({ status: 'error', message: error.message });
